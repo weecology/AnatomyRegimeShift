@@ -1,9 +1,11 @@
-# Functions for the Manuscript
-# Ellen K. Bledsoe
+# Functions for processing individual data for survival analyses
+# Based on original code from Sarah SUpp and Ellen K. Bledsoe
 
 ### LIBRARIES ### ==============================================================
 
 library(tidyverse)
+library(portalr)
+
 cbbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
                 "#0072B2", "#D55E00", "#CC79A7")
 
@@ -21,7 +23,6 @@ repo_data_to_Supp_data <- function(data, species_data){
   
   data <- data %>% 
     filter(period > 0, #remove negative periods and periods after plot switch
-           year > 1987 & year < 2015, #remove before first plot switch
            plot > 0, species %in% target) # remove non-target animals
   
   ## make dataframe look like Sarah's raw data
@@ -40,7 +41,7 @@ repo_data_to_Supp_data <- function(data, species_data){
   data <- data[, c("year", "month", "period", "Treatment_Number", 
                    "plot", "stake", "east", "north", "species", "sex", 
                    "reprod", "vagina", "nipples", "pregnant", "wgt",
-                   "tag", "note2", "ltag", "note3", "note5", "plot_type")]
+                   "tag", "note2", "ltag", "note3", "note5", "id", "plot_type")]
   
   # add a plot_type column for easier plotting down the road
   for (i in 1:length(data$period)){
