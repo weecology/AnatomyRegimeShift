@@ -330,19 +330,19 @@ same_period <- function(dat, tags){
   # used in 'clean_data_for_capture_histories' function
   # multiple individuals with same tag captured in same period = questionable
   
-  flagged_rats = data.frame("tag"=1, "reason"=1, "occurrences"=1)
+  flagged_rats = data.frame("tag"=1, "period"=1, "occurrences"=1)
   outcount = 0
   
   for (t in 1:length(tags)){
-    tmp <- which(dat$tag == tags[t])
+    tmp <- which(dat$id == tags[t])
     
     if (nrow(dat[tmp,]) > 1){
       periods = unique(dat[tmp,]$period)
       for (p in 1:length(periods)){
-        ptmp <- which(dat$tag == tags[t] & dat$period == periods[p])
+        ptmp <- which(dat$id == tags[t] & dat$period == periods[p])
         if (nrow(dat[ptmp,]) > 1){
           outcount = outcount + 1
-          flagged_rats[outcount,] <- c(tags[t], "sameprd", nrow(dat[ptmp,]))
+          flagged_rats[outcount,] <- c(tags[t], periods[p] , nrow(dat[ptmp,]))
           break
         }
       }
@@ -425,8 +425,8 @@ clean_data_for_capture_histories <- function(data){
   #   (e.g., no "unidentified rodents" or genus-only)
   data2 = subset(data, species!="DX" & species!="UR" & species!="RX" & species!="SX" & species!="PX" & species != "OX")
   
-  # give untagged individuals a unique 7-number code
-  data2 = id_unknowns(data2, 16)
+  # # give untagged individuals a unique 7-number code
+  # data2 = id_unknowns(data2, 16)
   
   # make sure when note2 == "*" it is counted as a new tag
   # necessary if using data data (ear and toe tags)
@@ -464,7 +464,12 @@ clean_data_for_capture_histories <- function(data){
 }
 
 
+
 create_trmt_hist = function(dat, tags, prd) {
+  
+  # I left the code that codes capture history by treatment (A=control, B= krat excl,
+# C=rodent excl even though I filtered down to controls only in case I wanted to add that back in 
+# for some reason)
   
   MARK_data = data.frame("captures" = 1,
                          "censored" = 1,
@@ -478,7 +483,7 @@ create_trmt_hist = function(dat, tags, prd) {
     
     for (p in 1:length(prd)) {
       
-      tmp <- which(dat$tag == tags[t] & dat$period == prd[p])
+      tmp <- which(dat$id == tags[t] & dat$period == prd[p])
       
       if (nrow(dat[tmp, ]) == 0) {
         state = "0"
@@ -497,7 +502,7 @@ create_trmt_hist = function(dat, tags, prd) {
       }
     }
     
-    tmp2 <- which(dat$tag == tags[t])
+    tmp2 <- which(dat$id == tags[t])
     censored = 1
     
     outcount = outcount + 1
@@ -550,6 +555,14 @@ run.ms <- function(S_dot = list(formula = ~ 1),
 }
 
 
+sp_trapping_history = function(data, sp){
+  dat = filter(all, species == sp) |> distinct(id,period, .keep_all = TRUE)
+  tags_all = unique(dat$id)
+  periods_all = seq(min(dat$period), max(dat$period))
+  mark_trmt_all = create_trmt_hist(dat, tags_all, periods_all)
+  filename = paste(sp,"_captures.csv", sep="")
+  write.csv(mark_trmt_all,filename)
+}
 ### PLOTTING FUNCTIONS ### =====================================================
 
 plot_PB_timeseries_by_treament <- function(data){

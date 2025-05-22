@@ -1,16 +1,11 @@
 # Making Data for Analyses
-# Based on original code from Sarah SUpp and Ellen K. Bledsoe
+# Based on original code from Sarah Supp and Ellen K. Bledsoe
 
 ### LIBRARIES ### ==============================================================
 
 library(tidyverse)
 library(portalr)
 library(RCurl)
-# library(RMark)
-library(forecast)
-library(nlme)
-library(patchwork) # devtools::install_github("thomasp85/patchwork")
-library(rapportools)
 source("functions.R")
 
 ##########################################################
@@ -53,28 +48,42 @@ bad_periods <- as.list(bad_periods$period)
 # don't use periods with only one day of trapping
 all_no_incomplete = all[-which(all$period %in% bad_periods),] 
 
+#################################################################################
+### Warning: the code that is commented out below might crash your computer!  ###
+#################################################################################
+#                                                                               #
+#       The `create_trmt_hist` function to create mark_trmt_all (line 237)      #
+#       takes a long time to run. If you don't want to run it, you can          #
+#       read in the results from the GitHub repo (lines 240-1) and then         #
+#       run the RMark code -OR- skip to line 294 for all RMark results          #
+#                                                                               #
+#################################################################################
 
 
-#------------------------------------------------------------
-# Create capture histories using MARK
-#------------------------------------------------------------
+sp_trapping_history(all, 'PP')
+sp_trapping_history(all, 'DM')
+sp_trapping_history(all, 'DO')
+sp_trapping_history(all,'DS')
+sp_trapping_history(all, 'PB')
 
-# select only PPs from the data and use Sarah's code to clean
-all_clean <- clean_data_for_capture_histories(all)
 
+PP_only <- filter(all, species == 'PP') |> distinct(id,period, .keep_all = TRUE)
+DM_only <- filter(all_clean, species == 'DM')  |> distinct(id,period, .keep_all = TRUE)
+DS_only <- filter(all_clean, species == 'DS')  |> distinct(id,period, .keep_all = TRUE)
+DO_only <- filter(all_clean, species == 'DO')  |> distinct(id,period, .keep_all = TRUE)
+PB_only <- filter(all_clean, species == 'PB') |> distinct(id,period, .keep_all = TRUE)
 
-PP_only <- filter(all_clean, species == 'PP')
-DM_only <- filter(all_clean, species == 'DM')
-DS_only <- filter(all_clean, species == 'DS')
-DO_only <- filter(all_clean, species == 'DO')
-PB_only <- filter(all_clean, species == 'PB')
 
 #-----------------------------------------------------------
-# Run MARK analyses on all PPs
+# Clean repeat tags in same period
 #-----------------------------------------------------------
+
+# Rarely an individual moves plots during a period, resulting in
+# a tag repeated for the same period code. This code finds those reepeats
+# and selects the first capture
 
 # Create a set of capture histories by treatment and by plot if needed
-tags_all = unique(PP_only$tag)
+tags_all = unique(PP_only$id)
 periods_all = seq(min(PP_only$period), max(PP_only$period))
 
 #################################################################################
@@ -88,4 +97,4 @@ periods_all = seq(min(PP_only$period), max(PP_only$period))
 #                                                                               #
 #################################################################################
 
-# mark_trmt_all = create_trmt_hist(PP_only, tags_all, periods_all)
+
