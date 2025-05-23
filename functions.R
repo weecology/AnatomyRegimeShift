@@ -38,7 +38,7 @@ repo_data_to_Supp_data <- function(data, species_data){
                  -(prevrt:note4))
   
   # reorganize columns
-  data <- data[, c("year", "month", "period", "Treatment_Number", 
+  data <- data[, c("year", "month", "newmoonnumber", "period", "Treatment_Number", 
                    "plot", "stake", "east", "north", "species", "sex", 
                    "reprod", "vagina", "nipples", "pregnant", "wgt",
                    "tag", "note2", "ltag", "note3", "note5", "id", "plot_type")]
@@ -61,7 +61,71 @@ repo_data_to_Supp_data <- function(data, species_data){
   
 }
 
+create_trmt_hist = function(dat, tags, prd) {
+  
+  # I left the code that codes capture history by treatment (A=control, B= krat excl,
+  # C=rodent excl even though I filtered down to controls only in case I wanted to add that back in 
+  # for some reason)
+  
+  MARK_data = data.frame("ch" = 1,
+                         "censored" = 1,
+                         "tags" = 1)
+  
+  outcount = 0
+  
+  for (t in 1:length(tags)) {
+    
+    capture_history = "" # create empty string
+    
+    for (p in 1:length(prd)) {
+      
+      tmp <- which(dat$id == tags[t] & dat$period == prd[p])
+      
+      if (nrow(dat[tmp, ]) == 0) {
+        state = "0"
+        capture_history = paste(capture_history, state, sep = "")
+      } else {
+        state = "1"
+        capture_history = paste(capture_history, state, sep = "")
 
+      }
+    }
+    
+    tmp2 <- which(dat$id == tags[t])
+    censored = 1
+    
+    outcount = outcount + 1
+    MARK_data[outcount, ] <- c(capture_history, censored, tags[t])
+    
+  }
+  
+  return(MARK_data)
+  
+}
+
+sp_trapping_history = function(data, sp){
+  
+  # for species given, looks for repeat tags in the same period
+  # selects first record
+  # generates capture history for each unique tag
+  # writes file so it doesn't have to be done again
+  # this is slow.
+  
+  unique_years = unique(data$year)
+  
+  for (year in unique_years){
+    year_max = year + 2
+    time_slice = data |> filter(year >= year, year <= year_max)
+    periods_all = seq(min(time_slice$period), max(time_slice$period))
+    dat = filter(time_slice, species == sp) |> distinct(id,period, .keep_all = TRUE)
+    tags_all = unique(dat$id)
+    mark_trmt_all = create_trmt_hist(dat, tags_all, periods_all)
+    filename = paste(sp,"_captures",year_max,".csv", sep="")
+    write.csv(mark_trmt_all,filename)
+  }
+  print(year_max)
+}
+  
 id_unknowns <- function(dat, tag_col) {
   
   # used in 'clean_data_for_capture_histories' function
@@ -465,54 +529,7 @@ clean_data_for_capture_histories <- function(data){
 
 
 
-create_trmt_hist = function(dat, tags, prd) {
-  
-  # I left the code that codes capture history by treatment (A=control, B= krat excl,
-# C=rodent excl even though I filtered down to controls only in case I wanted to add that back in 
-# for some reason)
-  
-  MARK_data = data.frame("captures" = 1,
-                         "censored" = 1,
-                         "tags" = 1)
-  
-  outcount = 0
-  
-  for (t in 1:length(tags)) {
-    
-    capture_history = "" # create empty string
-    
-    for (p in 1:length(prd)) {
-      
-      tmp <- which(dat$id == tags[t] & dat$period == prd[p])
-      
-      if (nrow(dat[tmp, ]) == 0) {
-        state = "0"
-        capture_history = paste(capture_history, state, sep = "")
-      } else {
-        if (dat[tmp, 4] == 1) {
-          state = "A"
-          capture_history = paste(capture_history, state, sep = "")
-        } else if (dat[tmp, 4] == 2) {
-          state = "B"
-          capture_history = paste(capture_history, state, sep = "")
-        } else if (dat[tmp, 4] == 3) {
-          state = "C"
-          capture_history = paste(capture_history, state, sep = "")
-        }
-      }
-    }
-    
-    tmp2 <- which(dat$id == tags[t])
-    censored = 1
-    
-    outcount = outcount + 1
-    MARK_data[outcount, ] <- c(capture_history, censored, tags[t])
-    
-  }
-  
-  return(MARK_data)
-  
-}
+
 
 
 run.ms <- function(S_dot = list(formula = ~ 1), 
@@ -555,14 +572,6 @@ run.ms <- function(S_dot = list(formula = ~ 1),
 }
 
 
-sp_trapping_history = function(data, sp){
-  dat = filter(all, species == sp) |> distinct(id,period, .keep_all = TRUE)
-  tags_all = unique(dat$id)
-  periods_all = seq(min(dat$period), max(dat$period))
-  mark_trmt_all = create_trmt_hist(dat, tags_all, periods_all)
-  filename = paste(sp,"_captures.csv", sep="")
-  write.csv(mark_trmt_all,filename)
-}
 ### PLOTTING FUNCTIONS ### =====================================================
 
 plot_PB_timeseries_by_treament <- function(data){
