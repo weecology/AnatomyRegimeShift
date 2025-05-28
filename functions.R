@@ -113,17 +113,20 @@ sp_trapping_history = function(data, sp){
   
   unique_years = unique(data$year)
   
-  for (year in unique_years){
-    year_max = year + 2
-    time_slice = data |> filter(year >= year, year <= year_max)
+  for (y in 1:length(unique_years)){
+    year_min = unique_years[y]
+    year_max = unique_years[y] + 2
+    time_slice = data |> filter(year >= year_min, year <= year_max) |> drop_na(id)
     periods_all = seq(min(time_slice$period), max(time_slice$period))
-    dat = filter(time_slice, species == sp) |> distinct(id,period, .keep_all = TRUE)
+    dat = filter(time_slice, species == sp) |> distinct(id,period, .keep_all = TRUE) 
     tags_all = unique(dat$id)
     mark_trmt_all = create_trmt_hist(dat, tags_all, periods_all)
     filename = paste(sp,"_captures",year_max,".csv", sep="")
     write.csv(mark_trmt_all,filename)
+#    write.csv(dat, filename)
+    print(year_max)
   }
-  print(year_max)
+
 }
   
 id_unknowns <- function(dat, tag_col) {
