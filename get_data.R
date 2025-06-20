@@ -26,12 +26,23 @@ controls_all = all |> filter(plot_type == "Control")
 
 # Generates capture history for every unique individual
 # for a calendar year (Jan-Dec). Makes one species files
-# note survivorship calculations crash < 1979 for PP, > 1994 for DS, and
-# <1994 for PB. Need to work previous data filters into survivorship code
+# note survivorship calculations crash < 1979 for PP, should manage in survivor code.
 
-PP_data = sp_trapping_history(all, 'PP')
+# sp_trapping_history crashes when no individuals in a year
+# currently managing by filtering input data here, but should
+# modify sp_trapping_history to change output if no individuals
+
+
 DM_data = sp_trapping_history(all, 'DM')
-DO_data = sp_trapping_history(all, 'DO')
-DS_data = sp_trapping_history(all,'DS')
-PB_data = sp_trapping_history(all, 'PB')
 
+DO_filtered = all |> filter(year < 2016)
+DO_data = sp_trapping_history(DO_filtered, 'DO')
+
+DS_filtered = all |> filter(year < 1995)
+DS_data = sp_trapping_history(DS_filtered,'DS')
+
+PB_filtered = all |> filter(year > 1994)
+PB_data = sp_trapping_history(PB_filtered, 'PB')
+
+PP_filtered = all |> filter(year > 1980)
+PP_data = sp_trapping_history(PP_filtered, 'PP')
