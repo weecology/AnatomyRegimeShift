@@ -5,7 +5,7 @@
 library(portalr)
 library(RCurl)
 source("functions.R")
-# library(RMark)
+
 
 
 ##################################################################
@@ -63,11 +63,16 @@ controls_all = all |> filter(plot_type == "Control")
 #################################################################################
 
 
-sp_trapping_history(all, 'PP')
-sp_trapping_history(all, 'DM')
-sp_trapping_history(all, 'DO')
-sp_trapping_history(all,'DS')
-sp_trapping_history(all, 'PB')
+PP_records = all |> filter(year != 1979)
+PP_data = sp_trapping_history(PP_records, 'PP')
+DM_data = sp_trapping_history(all, 'DM')
+DO_data = sp_trapping_history(all, 'DO')
+
+DS_records = all |> filter(year < 1995)
+DS_data = sp_trapping_history(DS_records,'DS')
+
+PB_records = all |> filter(year > 1994)
+PB_data = sp_trapping_history(PB_records, 'PB')
 
 
 # make table of plots and treatment types
