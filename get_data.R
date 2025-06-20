@@ -3,10 +3,7 @@
 
 ### LIBRARIES ### ==============================================================
 library(portalr)
-library(RCurl)
 source("functions.R")
-
-
 
 ##################################################################
 # GET DATA 
@@ -35,14 +32,23 @@ controls_all = all |> filter(plot_type == "Control")
 
 DM_data = sp_trapping_history(all, 'DM')
 
-DO_filtered = all |> filter(year < 2016)
-DO_data = sp_trapping_history(DO_filtered, 'DO')
+DO_data = sp_trapping_history(all, 'DO')
 
 DS_filtered = all |> filter(year < 1995)
 DS_data = sp_trapping_history(DS_filtered,'DS')
 
-PB_filtered = all |> filter(year > 1994)
+PB_filtered = all |> filter(year > 1995)
 PB_data = sp_trapping_history(PB_filtered, 'PB')
 
 PP_filtered = all |> filter(year > 1980)
 PP_data = sp_trapping_history(PP_filtered, 'PP')
+
+
+DM_survival = survival_output(species="DM")
+DO_survival = survival_output(species="DO")
+DS_survival = survival_output(species="DS")
+PB_survival = survival_output(species="PB")
+PP_survival = survival_output(species="PP")
+
+all_species = bind_rows(DM_survival, DO_survival, DS_survival, PB_survival, PP_survival)
+write.csv(all_species, "species_survival_end2015.csv")

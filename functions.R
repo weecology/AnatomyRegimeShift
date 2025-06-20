@@ -5,10 +5,8 @@
 
 library(tidyverse)
 library(portalr)
-
-cbbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", 
-                "#0072B2", "#D55E00", "#CC79A7")
-
+library(RCurl)
+library(marked)
 
 ### DATA FUNCTIONS ### =========================================================
 
@@ -167,6 +165,34 @@ sp_trapping_history = function(data, sp){
   return(years_captures)
 }
   
+survival_output = function(species){
+  
+  capture_data = read_csv(paste(species,"_captures_annual.csv", sep=""), 
+                          col_types = cols(ch = col_character()))
+  years = unique(capture_data$year)
+  survival_ts = data.frame(year=numeric(),
+                           species = character(),
+                           survival = numeric(),
+                           recap = numeric())
+  for (y in 1:length(years)) {
+    
+    print(paste("PROCESSING...", years[y]))
+    capture_history = capture_data |> filter(year == years[y])
+    tryCatch(
+      {cjs.m1 <- crm(capture_history)
+      Phi = exp(cjs.m1$results$beta$Phi)/(1+exp(cjs.m1$results$beta$Phi)) # real Phi (survival) estimate by hand
+      p = exp(cjs.m1$results$beta$p)/(1+exp(cjs.m1$results$beta$p)) # real p (capture probability) estimate by hand
+      newrow = list(years[y], species, Phi, p)},
+      error = function(cond) {newrow <<- list(years[y], species, 0, 0) })
+    survival_ts[nrow(survival_ts) + 1,] = newrow
+  }
+  write.csv(survival_ts, paste(species,"_survival.csv", sep=""))
+  return(survival_ts)
+}
+
+
+
+
 id_unknowns <- function(dat, tag_col) {
   
   # used in 'clean_data_for_capture_histories' function
