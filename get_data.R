@@ -24,7 +24,8 @@ get_rawdata(max_year=2015, min_period = 6)
 all = read.csv("raw_suppformat_rodents.csv")
 controls_all = all |> filter(plot_type == "Control")
 
-# Generate species files
+# Generates capture history for every unique individual
+# for a calendar year (Jan-Dec). Makes one species files
 # note survivorship calculations crash < 1979 for PP, > 1994 for DS, and
 # <1994 for PB. Need to work previous data filters into survivorship code
 

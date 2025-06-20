@@ -12,6 +12,39 @@ cbbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442",
 
 ### DATA FUNCTIONS ### =========================================================
 
+get_rawdata = function(max_year, min_period){
+# can't currently get universal tags from portalr, so this function downloads
+# data and supporting tables, adds newmooncodes to the rodent data, subsets to desired
+# treatments and time period (max year, min period) and converts
+# data format to work with Sarah Supp's individual capture history processing code.
+# It outputs a .csv file so you don't have to keep running this function which is slow
+  
+# rodent file from repo
+rodents <- getURL("https://raw.githubusercontent.com/weecology/PortalData/master/Rodents/Portal_rodent.csv")
+rdat <- read.csv(text = rodents, header = TRUE, na.strings = c(""), stringsAsFactors = FALSE)
+
+# species file
+species <- getURL("https://raw.githubusercontent.com/weecology/PortalData/master/Rodents/Portal_rodent_species.csv")
+sdat <- read.csv(text = species, header = TRUE, na.strings = c(""), stringsAsFactors = FALSE)
+
+# trapping file from repo
+trapping <- getURL("https://raw.githubusercontent.com/weecology/PortalData/master/Rodents/Portal_rodent_trapping.csv")
+tdat <- read.csv(text = trapping, header = TRUE, stringsAsFactors = FALSE)
+
+# newmoon files for converting census numbers to newmoons for time series
+newmoon = getURL("https://raw.githubusercontent.com/weecology/PortalData/master/Rodents/moon_dates.csv")
+mdat = read.csv(text = newmoon, header = TRUE, stringsAsFactors = FALSE)
+
+# add newmoonnumber to rodent table
+merged = rdat |> inner_join(mdat)
+
+# make it match Sarah Supp's data structure to use her code
+all <- repo_data_to_Supp_data(merged, sdat) %>% 
+  filter(year <= max_year & period > min_period)
+
+write.csv(all, "raw_suppformat_rodents.csv") # so you don't have to keep running this bit
+}
+
 repo_data_to_Supp_data <- function(data, species_data){
   
   # function to convert rodent data downloaded from the PortalData repo
@@ -67,14 +100,15 @@ create_trmt_hist = function(dat, tags, prd) {
   # C=rodent excl even though I filtered down to controls only in case I wanted to add that back in 
   # for some reason)
   
-  MARK_data = data.frame("ch" = 1,
+  MARK_data = data.frame("year" = 1,
+                         "ch" = 1,
                          "censored" = 1,
                          "tags" = 1)
   
   outcount = 0
   
   for (t in 1:length(tags)) {
-    
+    unique_year = unique(dat$year)
     capture_history = "" # create empty string
     
     for (p in 1:length(prd)) {
@@ -95,7 +129,7 @@ create_trmt_hist = function(dat, tags, prd) {
     censored = 1
     
     outcount = outcount + 1
-    MARK_data[outcount, ] <- c(capture_history, censored, tags[t])
+    MARK_data[outcount, ] <- c(unique_year,capture_history, censored, tags[t])
     
   }
   
@@ -112,21 +146,25 @@ sp_trapping_history = function(data, sp){
   # this is slow.
   
   unique_years = unique(data$year)
-  
+  years_captures = data.frame(year = integer(),
+                              ch = character(),
+                              censored = integer(),
+                              tags = character())
   for (y in 1:length(unique_years)){
-    year_min = unique_years[y]
-    year_max = unique_years[y] + 2
-    time_slice = data |> filter(year >= year_min, year <= year_max) |> drop_na(id)
+    year_target = unique_years[y]
+    time_slice = data |> filter(year == year_target) |> drop_na(id)
     periods_all = seq(min(time_slice$period), max(time_slice$period))
     dat = filter(time_slice, species == sp) |> distinct(id,period, .keep_all = TRUE) 
     tags_all = unique(dat$id)
     mark_trmt_all = create_trmt_hist(dat, tags_all, periods_all)
-    filename = paste(sp,"_captures",year_max,".csv", sep="")
-    write.csv(mark_trmt_all,filename)
-#    write.csv(dat, filename)
-    print(year_max)
+    years_captures = rbind(years_captures, mark_trmt_all)
+    print(year_target)
   }
 
+  filename = paste(sp,"_captures_annual.csv", sep="")
+  write.csv(years_captures,filename)
+
+  return(years_captures)
 }
   
 id_unknowns <- function(dat, tag_col) {
