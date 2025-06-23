@@ -188,23 +188,31 @@ sp_trapping_history = function(data, sp){
   
 survival_output = function(species){
   
+ ##### testing
+# species = "DS"
+# y = 17
+##############
+  
   capture_data = read_csv(paste(species,"_captures_annual.csv", sep=""), 
                           col_types = cols(ch = col_character()))
+  capture_data = capture_data |> filter(tags != 0)
   years = unique(capture_data$year)
   survival_ts = data.frame(year=numeric(),
                            species = character(),
                            survival = numeric(),
-                           recap = numeric())
+                           recap = numeric(),
+                           n_id = numeric())
   for (y in 1:length(years)) {
     
     print(paste("PROCESSING...", years[y]))
     capture_history = capture_data |> filter(year == years[y])
+    n_id = length(unique(capture_history$tags))
     tryCatch(
       {cjs.m1 <- crm(capture_history)
       Phi = exp(cjs.m1$results$beta$Phi)/(1+exp(cjs.m1$results$beta$Phi)) # real Phi (survival) estimate by hand
       p = exp(cjs.m1$results$beta$p)/(1+exp(cjs.m1$results$beta$p)) # real p (capture probability) estimate by hand
-      newrow = list(years[y], species, Phi, p)},
-      error = function(cond) {newrow <<- list(years[y], species, 0, 0) })
+      newrow = list(years[y], species, Phi, p, n_id)},
+      error = function(cond) {newrow <<- list(years[y], species, 0, 0, n_id) })
     survival_ts[nrow(survival_ts) + 1,] = newrow
   }
   write.csv(survival_ts, paste(species,"_survival.csv", sep=""))
