@@ -4,7 +4,6 @@
 ### LIBRARIES ### ==============================================================
 library(portalr)
 source("functions.R")
-library(ggplot2)
 
 ##################################################################
 # GET DATA 
@@ -19,8 +18,14 @@ get_rawdata()
 # Calculate Species Survival Data
 #
 #----------------------------------------------------------------
+
+# SKME: to improve this, need to convert to newmooncodes and use the survival calc that
+# takes into account differences in time between captures for missed periods. Would
+# possibly allow 2021 to get added back in and would correct survival estimates for
+# time periods where gaps are more prevalent
+
 all = read.csv("raw_suppformat_rodents.csv")
-controls_all = all |> filter(plot_type == "Control", year < 2020)
+controls_all = all |> filter(plot_type == "Control", year > 1977 & year < 2020)
 
 # Generates capture history for every unique individual
 # for a calendar year (Jan-Dec). Makes file for each species.
@@ -42,12 +47,11 @@ PB_survival = survival_output(species="PB")
 PP_survival = survival_output(species="PP")
 
 all_species = bind_rows(DM_survival, DO_survival, DS_survival, PB_survival, PP_survival)
-write.csv(all_species, "species_survival_end2015.csv")
+write.csv(all_species, "species_survival.csv")
 
-ggplot(all_species, aes(x=year, y=survival)) +
-  geom_line(aes(color = species)) +
-  geom_vline(xintercept = 1984) +
-  geom_vline(xintercept = 1999) +
-  geom_vline(xintercept = 2010)
-  
+#----------------------------------------------------------------
+#
+# Calculate New Individuals
+#
+#----------------------------------------------------------------
 
