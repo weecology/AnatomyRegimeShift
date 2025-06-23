@@ -16,7 +16,7 @@ get_rawdata()
 
 #----------------------------------------------------------------
 #
-# Make Capture History time slices
+# Calculate Species Survival Data
 #
 #----------------------------------------------------------------
 all = read.csv("raw_suppformat_rodents.csv")
