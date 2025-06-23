@@ -20,28 +20,19 @@ get_rawdata()
 #
 #----------------------------------------------------------------
 all = read.csv("raw_suppformat_rodents.csv")
-controls_all = all |> filter(plot_type == "Control")
+controls_all = all |> filter(plot_type == "Control", year < 2020)
 
 # Generates capture history for every unique individual
-# for a calendar year (Jan-Dec). Makes one species files
+# for a calendar year (Jan-Dec). Makes file for each species.
+# makes a 0 entry if no individuals caught that year
+
 # note survivorship calculations crash < 1979 for PP, should manage in survivor code.
 
-# sp_trapping_history crashes when no individuals in a year
-# currently managing by filtering input data here, but should
-# modify sp_trapping_history to change output if no individuals
-
-
-DM_data_2015 = sp_trapping_history(controls_all, 'DM')
-DO_data_2015 = sp_trapping_history(controls_all, 'DO')
-
-DS_filtered = controls_all |> filter(year < 1995)
-DS_data = sp_trapping_history(DS_filtered,'DS')
-
-PB_filtered = controls_all |> filter(year > 1995)
-PB_data = sp_trapping_history(PB_filtered, 'PB')
-
-PP_filtered = controls_all |> filter(year > 1980)
-PP_data = sp_trapping_history(PP_filtered, 'PP')
+DM_data = sp_trapping_history(controls_all, 'DM')
+DO_data = sp_trapping_history(controls_all, 'DO')
+DS_data = sp_trapping_history(controls_all,'DS')
+PB_data = sp_trapping_history(controls_all, 'PB')
+PP_data = sp_trapping_history(controls_all, 'PP')
 
 
 DM_survival = survival_output(species="DM")

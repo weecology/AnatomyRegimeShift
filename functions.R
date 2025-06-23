@@ -103,14 +103,15 @@ repo_data_to_Supp_data <- function(data, species_data){
   return(data)
  } 
 
-  
-
-
+ 
 create_trmt_hist = function(dat, tags, prd) {
   
   # I left the code that codes capture history by treatment (A=control, B= krat excl,
   # C=rodent excl even though I filtered down to controls only in case I wanted to add that back in 
   # for some reason)
+  
+   # tags = tags_all   # testing
+   # prd = periods_all # testing
   
   MARK_data = data.frame("year" = 1,
                          "ch" = 1,
@@ -136,8 +137,8 @@ create_trmt_hist = function(dat, tags, prd) {
 
       }
     }
-    
-    tmp2 <- which(dat$id == tags[t])
+
+ #   tmp2 <- which(dat$id == tags[t])
     censored = 1
     
     outcount = outcount + 1
@@ -151,12 +152,15 @@ create_trmt_hist = function(dat, tags, prd) {
 
 sp_trapping_history = function(data, sp){
   
-  # for species given, looks for repeat tags in the same period
-  # selects first record
-  # generates capture history for each unique tag
-  # writes file so it doesn't have to be done again
-  # this is slow.
+# need to change it skips create_trmt_hist when no records in
+# timeslice
   
+ # # #  ######
+ #  sp = 'DM'            #testing
+ #  data = controls_all  #testing
+ #  year_target = 1995   #testing
+ # #  ######
+ 
   unique_years = unique(data$year)
   years_captures = data.frame(year = integer(),
                               ch = character(),
@@ -168,11 +172,21 @@ sp_trapping_history = function(data, sp){
     periods_all = seq(min(time_slice$period), max(time_slice$period))
     dat = filter(time_slice, species == sp) |> distinct(id,period, .keep_all = TRUE) 
     tags_all = unique(dat$id)
+    if (nrow(dat) == 0){
+      mark_trtmt_all = data.frame("year" = 1,
+                             "ch" = 1,
+                             "censored" = 1,
+                             "tags" = 1)
+     mark_trtmt_all$year = unique_years[y]
+     mark_trtmt_all$ch = 0
+     mark_trtmt_all$censored = 0
+     mark_trtmt_all$tags = 0
+    } else {
     mark_trmt_all = create_trmt_hist(dat, tags_all, periods_all)
+    }
     years_captures = rbind(years_captures, mark_trmt_all)
     print(year_target)
-  }
-
+    }
   filename = paste(sp,"_captures_annual.csv", sep="")
   write.csv(years_captures,filename)
 
