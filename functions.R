@@ -10,7 +10,7 @@ library(marked)
 
 ### DATA FUNCTIONS ### =========================================================
 
-get_rawdata = function(max_year, min_period){
+get_rawdata = function(){
 # can't currently get universal tags from portalr, so this function downloads
 # data and supporting tables, adds newmooncodes to the rodent data, subsets to desired
 # treatments and time period (max year, min period) and converts
@@ -37,10 +37,9 @@ mdat = read.csv(text = newmoon, header = TRUE, stringsAsFactors = FALSE)
 merged = rdat |> inner_join(mdat)
 
 # make it match Sarah Supp's data structure to use her code
-all <- repo_data_to_Supp_data(merged, sdat) %>% 
-  filter(year <= max_year & period > min_period)
+all <- repo_data_to_Supp_data(merged, sdat)
 
-write.csv(all, "raw_suppformat_rodents.csv") # so you don't have to keep running this bit
+write.csv(all, paste("raw_suppformat_rodents.csv", sep="")) # so you don't have to keep running this bit
 }
 
 repo_data_to_Supp_data <- function(data, species_data){
@@ -74,23 +73,38 @@ repo_data_to_Supp_data <- function(data, species_data){
                    "reprod", "vagina", "nipples", "pregnant", "wgt",
                    "tag", "note2", "ltag", "note3", "note5", "id", "plot_type")]
   
+
   # add a plot_type column for easier plotting down the road
   for (i in 1:length(data$period)){
-    if (data$plot[i] %in% c(1, 2, 4, 8, 9, 11, 12, 14, 17, 22)){
-      data$Treatment_Number[i] = 1
-      data$plot_type[i] = 'Control'
-    } else if (data$plot[i] %in% c(3, 6, 13, 15, 18, 19, 20, 21 )){
-      data$Treatment_Number[i] = 2
-      data$plot_type[i] = 'Krat_Exclosure'
+    if (data$newmoonnumber[i] < 468){
+      if (data$plot[i] %in% c(1, 2, 4, 8, 9, 11, 12, 14, 17, 22)){
+        data$Treatment_Number[i] = 1
+        data$plot_type[i] = 'Control'
+      } else if (data$plot[i] %in% c(3, 6, 13, 15, 18, 19, 20, 21 )){
+          data$Treatment_Number[i] = 2
+          data$plot_type[i] = 'Krat_Exclosure'
+      } else {
+          data$Treatment_Number[i] = 3 # Plots 5, 7, 10, 16, 23, 24
+          data$plot_type[i] = 'Removal'
+      } 
     } else {
-      data$Treatment_Number[i] = 3 # 5, 7, 10, 16, 23, 24
-      data$plot_type[i] = 'Removal'
+        if (data$plot[i] %in% c(4,5,6,7,11,13,14,17,18,24)){
+          data$Treatment_Number[i] = 1
+          data$plot_type[i] = 'Control'
+          } else if (data$plot[i] %in% c(2,3,8,15,19,20,21,22)){
+            data$Treatment_Number[i] = 2
+            data$plot_type[i] = 'Krat_Exclosure'
+          } else {
+              data$Treatment_Number[i] = 3
+              data$plot_type[i] = 'Removal'
+      }
     }
-  }
-  
+ }
   return(data)
+ } 
+
   
-}
+
 
 create_trmt_hist = function(dat, tags, prd) {
   
