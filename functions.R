@@ -219,6 +219,20 @@ survival_output = function(species){
   return(survival_ts)
 }
 
+get_newcounts = function(data){
+  new_individuals = controls_all |> 
+    group_by(species, year) |> 
+    filter(note2 == "*") |>  count()
+  all_individuals = controls_all |> group_by(species,year) |> count() 
+  all_individuals = all_individuals |> 
+    left_join(new_individuals, by=join_by(year,species)) |>
+    rename(all = n.x, new = n.y) |>
+    mutate(per_new = new/all)
+  write.csv(all_individuals, "percent_newcaps.csv")
+  return(all_individuals)
+}
+
+
 
 ##########################
 # Left over functions from Ellen's code

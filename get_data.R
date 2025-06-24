@@ -24,7 +24,8 @@ get_rawdata()
 # time periods where gaps are more prevalent
 
 all = read.csv("raw_suppformat_rodents.csv")
-controls_all = all |> filter(plot_type == "Control", year > 1977 & year < 2020)
+dominant_sp = c("DM", "DO", "DS", "PB", "PP")
+controls_all = all |> filter(plot_type == "Control", year > 1977 & year < 2020, species %in% dominant_sp)
 
 # Generates capture history for every unique individual
 # for a calendar year (Jan-Dec). Makes file for each species.
@@ -53,4 +54,17 @@ write.csv(all_species, "species_survival.csv")
 # Calculate New Individuals
 #
 #----------------------------------------------------------------
+
+# ToDO: 
+# 1) we have years with all counts but no new counts. Need to check 
+#     that there really weren't new individuals (i.e. all recaps)
+# 2) early years do not have *. Might need to create a new function 
+#     that IDs 'newcaps' from the first appearance of a tag (with time 
+#     buffer from last seen). This is probably already (or partially)
+#     in the Supp code for cleaning tags. Using this would let us push 
+#     back caps to 1977.
+#
+
+annual_new = get_newcounts(controls_all)
+
 
