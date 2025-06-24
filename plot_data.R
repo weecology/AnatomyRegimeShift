@@ -1,3 +1,5 @@
+library(ggplot2)
+
 survival = read.csv("species_survival.csv")
 
 ggplot(survival, aes(x=year, y=survival)) +

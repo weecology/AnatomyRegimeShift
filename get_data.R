@@ -2,7 +2,6 @@
 # Based on original code from Sarah Supp and Ellen K. Bledsoe
 
 ### LIBRARIES ### ==============================================================
-library(portalr)
 source("functions.R")
 
 ##################################################################
