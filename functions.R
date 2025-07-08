@@ -106,19 +106,13 @@ repo_data_to_Supp_data <- function(data, species_data){
  
 create_trmt_hist = function(dat, tags, prd) {
   
-  # I left the code that codes capture history by treatment (A=control, B= krat excl,
-  # C=rodent excl even though I filtered down to controls only in case I wanted to add that back in 
-  # for some reason)
-
-  MARK_data = data.frame("year" = 1,
-                         "ch" = 1,
+  MARK_data = data.frame("ch" = 1,
                          "censored" = 1,
                          "tags" = 1)
   
   outcount = 0
   
   for (t in 1:length(tags)) {
-    unique_year = unique(dat$year)
     capture_history = "" # create empty string
     
     for (p in 1:length(prd)) {
@@ -134,12 +128,11 @@ create_trmt_hist = function(dat, tags, prd) {
 
       }
     }
-
- #   tmp2 <- which(dat$id == tags[t])
     censored = 1
     
     outcount = outcount + 1
-    MARK_data[outcount, ] <- c(unique_year,capture_history, censored, tags[t])
+    MARK_data[outcount, ] <- c(capture_history, censored, tags[t])
+    print(tags[t])
     
   }
   
@@ -149,49 +142,18 @@ create_trmt_hist = function(dat, tags, prd) {
 
 sp_trapping_history = function(data, sp){
   
-# need to change it skips create_trmt_hist when no records in
-# timeslice
-  
-  ########### Testing
-  # sp = 'PB'
-  # data = controls_all
-  # y = 1
-  #################
-  
-  unique_years = unique(data$year)
-  years_captures = data.frame(year = integer(),
-                              ch = character(),
-                              censored = integer(),
-                              tags = character())
-  for (y in 1:length(unique_years)){
-    year_target = unique_years[y]
-    time_slice = data |> filter(year == year_target) |> drop_na(id)
-    dat = filter(time_slice, species == sp) |> distinct(id,period, .keep_all = TRUE) 
-    if (nrow(dat) == 0){
-      mark_trmt_all = data.frame("year" = year_target,
-                             "ch" = 0,
-                             "censored" = 0,
-                             "tags" = 0)
-      } else {
-      periods_all = seq(min(time_slice$period), max(time_slice$period))
-      tags_all = unique(dat$id)
-      mark_trmt_all = create_trmt_hist(dat, tags_all, periods_all)
-      }
-    years_captures = rbind(years_captures, mark_trmt_all)
-    print(year_target)
-    }
-  filename = paste(sp,"_captures_annual.csv", sep="")
-  write.csv(years_captures,filename)
+    dat = data |> drop_na(id) |> filter(species == sp) |> distinct(id,period, .keep_all = TRUE) 
+    periods_all = seq(min(data$period), max(data$period))
+    tags_all = unique(dat$id)
+    mark_trmt_all = create_trmt_hist(dat, tags_all, periods_all)
+    filename = paste(sp,"_captures_all.csv", sep="")
+    write.csv(mark_trmt_all,filename)
 
-  return(years_captures)
+  return(mark_trmt_all)
 }
+
   
 survival_output = function(species){
-  
- ##### testing
-# species = "DS"
-# y = 17
-##############
   
   capture_data = read_csv(paste(species,"_captures_annual.csv", sep=""), 
                           col_types = cols(ch = col_character()))
@@ -216,7 +178,7 @@ survival_output = function(species){
     survival_ts[nrow(survival_ts) + 1,] = newrow
   }
   write.csv(survival_ts, paste(species,"_survival.csv", sep=""))
-  return(survival_ts)
+  return(c(survival_ts,cjs.m1))
 }
 
 get_newcounts = function(data){
