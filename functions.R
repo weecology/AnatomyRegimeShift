@@ -6,7 +6,8 @@
 library(tidyverse)
 library(portalr)
 library(RCurl)
-library(marked)
+library(RMark)
+# library(marked)
 
 ### DATA FUNCTIONS ### =========================================================
 
@@ -40,6 +41,7 @@ merged = rdat |> inner_join(mdat)
 all <- repo_data_to_Supp_data(merged, sdat)
 
 write.csv(all, paste("raw_suppformat_rodents.csv", sep="")) # so you don't have to keep running this bit
+write.csv(mdat, "newmooncodes.csv")
 }
 
 repo_data_to_Supp_data <- function(data, species_data){
@@ -142,7 +144,8 @@ create_trmt_hist = function(dat, tags, prd) {
 
 sp_trapping_history = function(data, sp){
   
-    dat = data |> drop_na(id) |> filter(species == sp) |> distinct(id,period, .keep_all = TRUE) 
+    dat = data |> drop_na(id) |> filter(species == sp) |> 
+      distinct(id,period, .keep_all = TRUE) 
     periods_all = seq(min(data$period), max(data$period))
     tags_all = unique(dat$id)
     mark_trmt_all = create_trmt_hist(dat, tags_all, periods_all)
@@ -152,33 +155,49 @@ sp_trapping_history = function(data, sp){
   return(mark_trmt_all)
 }
 
-  
-survival_output = function(species){
-  
-  capture_data = read_csv(paste(species,"_captures_annual.csv", sep=""), 
+survival_output = function(species, start_period, end_period){
+
+  capture_data = read_csv(paste(species,"_captures_all.csv", sep=""), 
                           col_types = cols(ch = col_character()))
-  capture_data = capture_data |> filter(tags != 0)
-  years = unique(capture_data$year)
-  survival_ts = data.frame(year=numeric(),
-                           species = character(),
-                           survival = numeric(),
-                           recap = numeric(),
-                           n_id = numeric())
-  for (y in 1:length(years)) {
-    
-    print(paste("PROCESSING...", years[y]))
-    capture_history = capture_data |> filter(year == years[y])
-    n_id = length(unique(capture_history$tags))
-    tryCatch(
-      {cjs.m1 <- crm(capture_history)
-      Phi = exp(cjs.m1$results$beta$Phi)/(1+exp(cjs.m1$results$beta$Phi)) # real Phi (survival) estimate by hand
-      p = exp(cjs.m1$results$beta$p)/(1+exp(cjs.m1$results$beta$p)) # real p (capture probability) estimate by hand
-      newrow = list(years[y], species, Phi, p, n_id)},
-      error = function(cond) {newrow <<- list(years[y], species, 0, 0, n_id) })
-    survival_ts[nrow(survival_ts) + 1,] = newrow
-  }
-  write.csv(survival_ts, paste(species,"_survival.csv", sep=""))
-  return(c(survival_ts,cjs.m1))
+  capture_data = capture_data |> rename(key = ...1, freq = censored) |> 
+    select(-c(tags))
+  
+  # process the data 
+  capture.pr <- process.data(capture_data, model = "CJS")
+  
+  # Setup model structures for each parameter
+  Phi.dot = list(formula = ~ 1)
+  # force use of an identity matrix by putting '-1' in formula
+  Phi.time = list(formula = ~ -1 + time) 
+  
+  p.dot = list(formula = ~ 1)
+  
+  # constant survival and recapture rates
+  Phi.dot.p.dot = mark(capture.pr, 
+                       model.parameters = list(Phi = Phi.dot, p = p.dot))
+  
+  # time varying survival and constant recapture rates
+  Phi.time.p.dot = mark(capture.pr, 
+                        model.parameters = list(Phi = Phi.time, p = p.dot))
+  
+  time_phi = Phi.time.p.dot$results$real
+  p_result = time_phi |> tail(1)
+  
+  AICc_dot = Phi.dot.p.dot$results$AICc
+  AICc_t = Phi.time.p.dot$results$AICc
+  model_aics_p = data.frame(sp = species,
+                            constant_AICc = AICc_dot,
+                            time_AICc = AICc_t,
+                            p.dot = p_result)
+  
+  phi_time = time_phi |> filter(row_number() <= n()-1)
+  phi_time$period = seq(start_period+1,end_period)
+  mdat = read_csv("newmooncodes.csv")
+  phi_time = phi_time |> left_join(mdat,phi_time, by='period')
+  
+  write.csv(phi_time, paste(species,"period_survival.csv",sep=""))
+  write.csv(model_aics_p, paste(species, "survival_AICs.csv", sep=""))
+  return(phi_time)
 }
 
 get_newcounts = function(data){
