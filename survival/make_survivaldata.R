@@ -26,7 +26,7 @@ dominant_sp = c("DM", "DO", "DS", "PB", "PP")
 # possibly allow 2021 to get added back in and would correct survival estimates for
 # time periods where gaps are more prevalent
 
-all = read.csv("raw_suppformat_rodents.csv")
+all = read.csv("../raw_suppformat_rodents.csv")
 controls_all = all |> filter(plot_type == "Control", year > 1977 & year < 2020, species %in% dominant_sp)
 start_period = min(controls_all$period)
 end_period = max(controls_all$period)
