@@ -26,7 +26,7 @@ data = data|>
          species = replace_na(species, "NE"))
 
 # SUBSET to control data and years of interest
-controls = data |> filter(plot_type == "Control", year > 1977 & year < 2020)
+controls = data |> filter(plot_type == "Control", year < 2020)
 
 # FIND first capture of each unique tag
 first_captures = controls |> 
