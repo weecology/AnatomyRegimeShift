@@ -61,11 +61,16 @@ PP_survival = survival_output(species="PP", start_period, end_period)
 allspecies = data.frame()
 
 for(spcode in dominant_sp){
-data = read_csv(paste(path,spcode,"period_survival.csv", sep=""))
+data = read.csv(paste(path,spcode,"period_survival.csv", sep=""))
 data = data |> mutate(species = rep(spcode, n()))
 allspecies = rbind(allspecies,data)
 }
-allspecies = allspecies |> select(-c(...1,...9,fixed,note,period))
+allspecies = allspecies |> select(-c(...1,fixed,note,period)) |>
+  mutate(month = month(newmoondate), year = year(newmoondate))
+
+month_data = allspecies |> group_by(species, month) |> 
+  summarise(month_mean = mean(estimate), month_sd = sd(estimate))
+allspecies = allspecies |> full_join(month_data)
 write.csv(allspecies, paste(path,"species_survival.csv",sep=""), row.names=FALSE)
 
 
