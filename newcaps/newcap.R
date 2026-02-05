@@ -56,7 +56,10 @@ capture_counts = all_captures |> full_join(new_caps) |>
 
 month_avg = capture_counts |>
   group_by(month, species) |> 
-  summarise(month_mean = mean(relative_new), month_std = sd(relative_new))
+  summarise(month_relmean = mean(relative_new), 
+            month_relstd = sd(relative_new),
+            month_rawmean = mean(new_caps),
+            month_rawstd = sd(new_caps))
 
 capture_output = capture_counts |> full_join(month_avg)
   
