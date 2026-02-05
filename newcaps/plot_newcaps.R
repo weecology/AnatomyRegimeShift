@@ -42,6 +42,7 @@ ggplot(species_data, aes(x = time, y = deviation)) +
   facet_wrap(vars(species))
 
 flood_regime = species_data |> filter(time > yearmonth("1996 Sep"), time < yearmonth("2001 Dec"))
+
 ggplot(flood_regime, aes(x = time, y = raw_deviation)) +
   geom_point() +
   geom_line() +
