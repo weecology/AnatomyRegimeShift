@@ -52,17 +52,8 @@ all_captures = controls |> group_by(newmoonnumber, time, species) |>
 capture_counts = all_captures |> full_join(new_caps) |> 
   mutate(new_caps = replace_na(new_caps, 0), 
          relative_new = new_caps/all_caps,
-         month = month(time)) 
-
-month_avg = capture_counts |>
-  group_by(month, species) |> 
-  summarise(month_relmean = mean(relative_new), 
-            month_relstd = sd(relative_new),
-            month_rawmean = mean(new_caps),
-            month_rawstd = sd(new_caps))
-
-capture_output = capture_counts |> full_join(month_avg)
+         month = month(time))
   
   
-write.csv(capture_output, paste(path,"percent_newcaps.csv", sep=""), 
+write.csv(capture_counts, paste(path,"percent_newcaps.csv", sep=""), 
           row.names=FALSE)
