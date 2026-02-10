@@ -51,11 +51,11 @@ PP_data = sp_trapping_history(controls_all, 'PP')
 
 ## todo: need to update survival function with code in Rmark_survival_test.csv
 ## todo: reformat survival_functions to read from survival folder?
-DM_survival = survival_output(species="DM", start_period, end_period)
-DO_survival = survival_output(species="DO", start_period, end_period)
-DS_survival = survival_output(species="DS", start_period, end_period)
-PB_survival = survival_output(species="PB", start_period, end_period)
-PP_survival = survival_output(species="PP", start_period, end_period)
+DM_survival = survival_output(species="DM", start_period, end_period, path=path)
+DO_survival = survival_output(species="DO", start_period, end_period, path=path)
+DS_survival = survival_output(species="DS", start_period, end_period, path=path)
+PB_survival = survival_output(species="PB", start_period, end_period, path=path)
+PP_survival = survival_output(species="PP", start_period, end_period, path=path)
 
 # format survival time-series
 allspecies = data.frame()
@@ -66,11 +66,9 @@ data = data |> mutate(species = rep(spcode, n()))
 allspecies = rbind(allspecies,data)
 }
 allspecies = allspecies |> select(-c(...1,fixed,note,period)) |>
-  mutate(month = month(newmoondate), year = year(newmoondate))
+  mutate(month = month(newmoondate), year = year(newmoondate),
+         time= yearmonth(newmoondate))
 
-month_data = allspecies |> group_by(species, month) |> 
-  summarise(month_mean = mean(estimate), month_sd = sd(estimate))
-allspecies = allspecies |> full_join(month_data)
 write.csv(allspecies, paste(path,"species_survival.csv",sep=""), row.names=FALSE)
 
 
