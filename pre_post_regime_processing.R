@@ -25,18 +25,14 @@ plot_format = function(plot_data, regime_data){
   ggtitle(title) +
   facet_wrap(vars(species))
 }
-data = read.csv("./newcaps/percent_newcaps.csv")
-
 
 regimes = read.csv("regime_dates.csv") #dates from Christensen
 
 dominant_sp = c("DM", "DS", "DO", "PP", "PB")
 
-data = data |> mutate(time = yearmonth(time)) |> 
-  filter(species %in% dominant_sp) |>
-  select(-c(relative_new,month)) |> 
-  complete(nesting(newmoonnumber, time), species, fill=list(all_caps=0, new_caps=0)) |>
-  mutate(month = month(time))
+data = read.csv("./newcaps/newcap_data.csv")
+
+data = data |> mutate(time = yearmonth(time)) 
 
 regimes = regimes |> mutate(transition_start = yearmonth(transition_start),
                             transition_end = yearmonth(transition_end),

@@ -50,10 +50,11 @@ all_captures = controls |> group_by(newmoonnumber, time, species) |>
 
 # MERGE count data and CALCULATE relative number of new captures
 capture_counts = all_captures |> full_join(new_caps) |> 
-  mutate(new_caps = replace_na(new_caps, 0), 
-         relative_new = new_caps/all_caps,
-         month = month(time))
+  mutate(new_caps = replace_na(new_caps, 0), time = yearmonth(time)) 
+
+capture_counts = as.data.frame(capture_counts)|> complete(nesting(newmoonnumber, time), species, fill=list(all_caps=0, new_caps=0)) |>
+  mutate(month = month(time))
   
   
-write.csv(capture_counts, paste(path,"percent_newcaps.csv", sep=""), 
+write.csv(capture_counts, paste(path,"newcap_data.csv", sep=""), 
           row.names=FALSE)
