@@ -1,0 +1,52 @@
+## Files 
+
+# Make data used in all analyses
+raw_data.R: Generates individual-level data for plots with the universal tag
+and codes for treatments.
+  Output: raw_suppformat_rodents.csv
+
+# Make survival histories for each individual on controls
+make_survivaldata.R: calculates survival estimates by month for each species.
+uses the unique tags in raw_suppformat_rodents.csv to
+generate 0,1 capture history for each individual. Uses capture histories to
+calculate monthly survival estimates by species. Tests constant survival over time
+against varying survival,
+  Outputs:
+    Capture histories: [species]_captures_all.csv
+    Species survivals: [species]period_survival.csv
+    compiled survivals across species: regime_survival.csv
+    survival dynamics test: [species]survival_AICs.csv
+    
+# Reproductive activity
+
+# New arrivals (dispersals and births)
+
+newcap.R : uses the first record of a unique ID as the "new arrival" month and
+for each month counts the number of first records in each month.
+  Output: newcap_data.csv
+
+# Abundance trends and variability pre and post regime shift
+
+
+
+## ToDo
+
+* Redo raw_suppformat_rodents.csv using portalr
+* Need to completely revisit survival calculations, maybe with Ellen Robertson?
+* Survival calulcations conducted on all control plots, but those plots change over time
+  - is there enough data to do just long-term controls? Or should we break time
+    series into plot regimes and conduct survival analyses within regimes? 
+    (1977-1988,1989-2014, 2014-present)
+    
+
+
+Goals:
+
+* Monthly survival, each species [done]
+* Monthly new captures [done]
+* Monthly dN/dt
+* monthly proportion reproductive?
+* Monthly competition (non-dipos)
+* Calculate seasonal anonmalies in survivorship, new captures, etc?
+  - to produce a distribution of z-scores (or other index) to see if most extreme
+  values line up with regime events.

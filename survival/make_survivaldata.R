@@ -71,7 +71,7 @@ allspecies = allspecies |> select(-c(...1,fixed,note,period)) |>
 
 write.csv(allspecies, paste(path,"species_survival.csv",sep=""), row.names=FALSE)
 
-# make version for pre-post regime plots
+# Combines species-level survivals into single file ready for pre-post regime graphs 
 
 regime_survival = allspecies |> select(newmoonnumber, time, species, estimate, month)
 write.csv(regime_survival, paste(path,"regime_survival.csv",sep=""), row.names=FALSE)
